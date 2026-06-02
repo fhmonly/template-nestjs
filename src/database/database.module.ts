@@ -1,0 +1,24 @@
+import { DynamicModule, Global, Module } from '@nestjs/common';
+import { DatabaseModuleOptions } from './database.interface';
+import { DatabaseService } from './database.service';
+
+@Global()
+@Module({})
+export class DatabaseModule {
+  static register(options: DatabaseModuleOptions): DynamicModule {
+    return {
+      module: DatabaseModule,
+
+      imports: options.imports ?? [],
+
+      providers: [
+        {
+          provide: DatabaseService,
+          useExisting: options.provider,
+        },
+      ],
+
+      exports: [DatabaseService],
+    };
+  }
+}

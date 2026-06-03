@@ -1,12 +1,13 @@
-import { DynamicModule, Global, Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { DatabaseModuleOptions } from './database.interface';
 import { DatabaseService } from './database.service';
 
-@Global()
 @Module({})
 export class DatabaseModule {
   static register(options: DatabaseModuleOptions): DynamicModule {
     return {
+      global: true,
+
       module: DatabaseModule,
 
       imports: options.imports ?? [],

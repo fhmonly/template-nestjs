@@ -1,8 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsInt, IsString } from 'class-validator';
-import { CacheEnvSchema } from 'src/cache/cache-env.schema';
 
-export class RedisEnvSchema extends CacheEnvSchema {
+export class RedisEnvSchema {
   @IsString()
   REDIS_HOST!: string;
 

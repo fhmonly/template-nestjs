@@ -2,8 +2,8 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { drizzle, MySql2Database } from 'drizzle-orm/mysql2';
 import { createPool, Pool } from 'mysql2/promise';
-import databaseEnvConfig from 'src/database/database-env.config';
-import { DatabaseService } from 'src/database/database.service';
+import databaseEnvConfig from 'src/infrastructure/database/database-env.config';
+import { DatabaseService } from 'src/infrastructure/database/database.service';
 
 @Injectable()
 export class MySQLDatabaseService

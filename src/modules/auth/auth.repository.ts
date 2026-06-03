@@ -1,19 +1,24 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, gt, or } from 'drizzle-orm';
-import { DatabaseService } from 'src/database/database.service';
-import { MySQLDatabaseService } from 'src/database/drivers/mysql/mysql.service';
+import { DATABASE_SERVICE } from 'src/infrastructure/database/constants';
+import { MySQLDatabaseService } from 'src/infrastructure/database/drivers/mysql/mysql.service';
 import {
   InsertSessionSchema,
   sessions,
-} from 'src/database/schemas/sessions.schema';
-import { InsertUserSchema, users } from 'src/database/schemas/users.schema';
+} from 'src/infrastructure/database/schemas/sessions.schema';
+import {
+  InsertUserSchema,
+  users,
+} from 'src/infrastructure/database/schemas/users.schema';
 
 @Injectable()
 export class AuthRepository {
-  constructor(private readonly dbService: DatabaseService) {}
+  constructor(
+    @Inject(DATABASE_SERVICE) private readonly dbService: MySQLDatabaseService,
+  ) {}
 
   private get db() {
-    return (this.dbService as MySQLDatabaseService).db;
+    return this.dbService.db;
   }
 
   async createUser(payload: InsertUserSchema): Promise<number> {

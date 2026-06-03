@@ -1,6 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import bcrypt from 'bcrypt';
-import { AuthJwtService } from 'src/auth/auth-jwt.service';
+import { AuthJwtService } from 'src/infrastructure/auth/auth-jwt.service';
 import { AuthRegisterDTO } from './auth.dto';
 import { AuthRepository } from './auth.repository';
 

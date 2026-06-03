@@ -2,7 +2,7 @@
 import { RedisService } from '@liaoliaots/nestjs-redis';
 import { Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
-import { CacheService } from 'src/cache/cache.service';
+import { CacheService } from 'src/infrastructure/cache/cache.service';
 
 @Injectable()
 export class RedisCacheService extends CacheService {

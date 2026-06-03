@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { Config, defineConfig } from 'drizzle-kit';
 import 'reflect-metadata';
-import { DatabaseEnvSchema } from 'src/database/database-env.schema';
+import { DatabaseEnvSchema } from 'src/infrastructure/database/database-env.schema';
 import { validateObjectUsingClass } from 'src/utils/validator/object.validator';
 dotenv.config();
 

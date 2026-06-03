@@ -20,7 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:generate": "npx drizzle-kit generate",
     "db:migrate": "npx drizzle-kit push",
-    "db:seed": "ts-node -r tsconfig-paths/register ./src/database/seeds/index.ts"
+    "db:seed": "ts-node -r tsconfig-paths/register ./src/infrastructure/database/seeds/index.ts"
   },
   "dependencies": {
     "@liaoliaots/nestjs-redis": "^10.0.0",

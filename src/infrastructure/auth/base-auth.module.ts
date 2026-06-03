@@ -9,7 +9,7 @@ import { AuthGuard } from './auth.guard';
   imports: [
     ConfigModule.forFeature(authEnvConfig),
     JwtModule.register({
-      global: true,
+      signOptions: { expiresIn: '1d' },
     }),
   ],
   providers: [AuthGuard, AuthJwtService],

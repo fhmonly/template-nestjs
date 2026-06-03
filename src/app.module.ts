@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
-import { DatabaseModule } from './database/database.module';
-import { MySQLDatabaseModule } from './database/drivers/mysql/mysql.module';
-import { MySQLDatabaseService } from './database/drivers/mysql/mysql.service';
+import { DatabaseModule } from './infrastructure/database/database.module';
+import { MySQLDatabaseModule } from './infrastructure/database/drivers/mysql/mysql.module';
+import { MySQLDatabaseService } from './infrastructure/database/drivers/mysql/mysql.service';
 import { AuthModule } from './modules/auth/auth.module';
 
 @Module({

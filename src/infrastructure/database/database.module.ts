@@ -1,6 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
+import { DATABASE_SERVICE } from './constants';
 import { DatabaseModuleOptions } from './database.interface';
-import { DatabaseService } from './database.service';
 
 @Module({})
 export class DatabaseModule {
@@ -14,12 +14,12 @@ export class DatabaseModule {
 
       providers: [
         {
-          provide: DatabaseService,
+          provide: DATABASE_SERVICE,
           useExisting: options.provider,
         },
       ],
 
-      exports: [DatabaseService],
+      exports: [DATABASE_SERVICE],
     };
   }
 }

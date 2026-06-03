@@ -4,7 +4,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CacheInterceptor } from './cache.interceptor';
 import { CacheModuleOptions } from './cache.interface';
-import { CacheService } from './cache.service';
+import { CACHE_SERVICE } from './constants';
 
 @Module({})
 export class CacheModule {
@@ -18,7 +18,7 @@ export class CacheModule {
 
       providers: [
         {
-          provide: CacheService,
+          provide: CACHE_SERVICE,
           useExisting: options.provider,
         },
         {
@@ -27,7 +27,7 @@ export class CacheModule {
         },
       ],
 
-      exports: [CacheService],
+      exports: [CACHE_SERVICE],
     };
   }
 }

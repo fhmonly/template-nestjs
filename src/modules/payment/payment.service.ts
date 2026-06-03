@@ -14,28 +14,40 @@ export class PaymentService {
   async createTransactionToken(
     data: SnapTransactionParameter['transaction_details'],
   ) {
-    return this.paymentGateway.snap.createTransactionToken({
+    const trx = await this.paymentGateway.snap.createTransactionToken({
       transaction_details: data,
     });
+    return {
+      data: { token: trx },
+    };
   }
 
   async createTransactionRedirectUrl(
     data: SnapTransactionParameter['transaction_details'],
   ) {
-    return this.paymentGateway.snap.createTransactionRedirectUrl({
+    const trx = await this.paymentGateway.snap.createTransactionRedirectUrl({
       transaction_details: data,
     });
+    return {
+      data: { redirect_url: trx },
+    };
   }
 
   async createTransaction(
     data: SnapTransactionParameter['transaction_details'],
   ) {
-    return this.paymentGateway.snap.createTransaction({
+    const trx = await this.paymentGateway.snap.createTransaction({
       transaction_details: data,
     });
+    return {
+      data: trx,
+    };
   }
 
   async updateStatus(trxId: string) {
-    return this.paymentGateway.coreAPI.updateStatus(trxId);
+    const trx = await this.paymentGateway.coreAPI.updateStatus(trxId);
+    return {
+      data: trx,
+    };
   }
 }

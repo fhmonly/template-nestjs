@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentDTO, PaymentStatusDTO } from './payment.dto';
 import { PaymentService } from './payment.service';
 
@@ -7,6 +8,8 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post('generate-token')
+  @HttpCode(201)
+  @ApiBearerAuth('access-token')
   async generateToken(@Body() data: PaymentDTO) {
     return this.paymentService.createTransactionToken({
       gross_amount: data.amount,
@@ -15,6 +18,8 @@ export class PaymentController {
   }
 
   @Get('update-status/:orderId')
+  @ApiBearerAuth('access-token')
+  @HttpCode(200)
   async updateStatus(@Param() data: PaymentStatusDTO) {
     return this.paymentService.updateStatus(data.orderId);
   }

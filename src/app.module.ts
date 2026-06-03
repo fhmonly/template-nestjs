@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
+    // *============= Lib Modules ================
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -24,7 +25,11 @@ import { AuthModule } from './modules/auth/auth.module';
     //   imports: [RedisCacheModule],
     //   provider: RedisCacheService,
     // }),
+    // !============= End Lib Modules ================
+
+    // *============= Route Modules ================
     AuthModule,
+    // !============= End Route Modules ================
   ],
   controllers: [AppController],
 })

@@ -1,6 +1,8 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import bcrypt from 'bcrypt';
 import { AuthJwtService } from 'src/auth/auth-jwt.service';
+import { OAuthLoginDTO } from 'src/lib/oauth/oauth.dto';
+import { OAuthService } from 'src/lib/oauth/oauth.service';
 import { AuthRegisterDTO } from './auth.dto';
 import { AuthRepository } from './auth.repository';
 
@@ -9,6 +11,7 @@ export class AuthService {
   constructor(
     private readonly repo: AuthRepository,
     private readonly authJwtService: AuthJwtService,
+    private readonly oauthService: OAuthService,
   ) {}
 
   async register(payload: AuthRegisterDTO) {
@@ -140,6 +143,22 @@ export class AuthService {
       };
     } catch (error) {
       throw new ConflictException('Invalid refresh token');
+    }
+  }
+
+  async loginWithGoogle(idToken: OAuthLoginDTO['idToken']) {
+    const payload = await this.oauthService.loginWithGoogle(idToken);
+    const user = await this.repo.findUserByEmail(payload.email!);
+
+    if (user.length >= 1) {
+      return await this.login(payload.email!, '');
+    } else {
+      await this.register({
+        email: payload.email!,
+        password: '',
+      });
+
+      return await this.login(payload.email!, '');
     }
   }
 }

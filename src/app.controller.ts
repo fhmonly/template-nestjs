@@ -1,12 +1,17 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor() {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  redirect() {
+    return {
+      api_status: 'ok',
+      timestamp: new Date().toISOString(),
+      message: 'API is running',
+      api: '/api',
+      swagger: '/api/swagger',
+    };
   }
 }

@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { MySQLDatabaseModule } from './database/drivers/mysql/mysql.module';
 import { MySQLDatabaseService } from './database/drivers/mysql/mysql.service';
@@ -18,7 +16,6 @@ import { AuthModule } from './modules/auth/auth.module';
         },
       ],
     }),
-    ConfigModule,
     DatabaseModule.register({
       imports: [MySQLDatabaseModule],
       provider: MySQLDatabaseService,
@@ -30,6 +27,5 @@ import { AuthModule } from './modules/auth/auth.module';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

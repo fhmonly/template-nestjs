@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, or } from 'drizzle-orm';
+import { DatabaseService } from 'src/database/database.service';
 import { MySQLDatabaseService } from 'src/database/drivers/mysql/mysql.service';
 import {
   InsertSessionSchema,
@@ -9,10 +10,10 @@ import { InsertUserSchema, users } from 'src/database/schemas/users.schema';
 
 @Injectable()
 export class AuthRepository {
-  constructor(private readonly dbService: MySQLDatabaseService) {}
+  constructor(private readonly dbService: DatabaseService) {}
 
   private get db() {
-    return this.dbService.db;
+    return (this.dbService as MySQLDatabaseService).db;
   }
 
   async createUser(payload: InsertUserSchema): Promise<number> {
@@ -62,5 +63,19 @@ export class AuthRepository {
       .update(sessions)
       .set({ isRevoked: true })
       .where(eq(sessions.userId, userId));
+  }
+
+  async findUserByIdentifier(identifier: string) {
+    return await this.db
+      .select()
+      .from(users)
+      .where(
+        or(
+          eq(users.email, identifier),
+          eq(users.username, identifier),
+          // eq(users.phone, identifier),
+        ),
+      )
+      .limit(1);
   }
 }

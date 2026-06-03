@@ -35,9 +35,9 @@ export class AuthService {
     };
   }
 
-  async login(email: string, password: string) {
+  async login(identifier: string, password: string) {
     try {
-      const [user] = await this.repo.findUserByEmail(email);
+      const [user] = await this.repo.findUserByIdentifier(identifier);
       if (!user) throw new ConflictException('User not found');
 
       const isPasswordValid = await bcrypt.compare(password, user.password!);

@@ -1,5 +1,4 @@
 import {
-  boolean,
   int,
   mysqlEnum,
   mysqlTable,
@@ -15,8 +14,6 @@ export const tokens = mysqlTable('tokens', {
   token: varchar('token', { length: 255 }).notNull(),
 
   type: mysqlEnum('type', ['EMAIL_VERIFICATION', 'PASSWORD_RESET']).notNull(),
-
-  isUsed: boolean('is_used').default(false).notNull(),
 
   expiresAt: timestamp('expires_at').notNull(),
 

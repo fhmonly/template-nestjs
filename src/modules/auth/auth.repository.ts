@@ -99,4 +99,8 @@ export class AuthRepository {
       .set({ emailVerifiedAt: new Date(), emailVerified: true })
       .where(eq(users.id, userId));
   }
+
+  async updatePassword(userId: number, password: string) {
+    await this.db.update(users).set({ password }).where(eq(users.id, userId));
+  }
 }

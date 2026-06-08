@@ -10,4 +10,4 @@ export type RequiredMailOptions = {
   template: MailTemplate;
 };
 
-export type MailTemplate = 'verification';
+export type MailTemplate = 'verification' | 'reset-password';

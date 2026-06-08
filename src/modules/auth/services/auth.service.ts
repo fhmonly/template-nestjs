@@ -8,9 +8,15 @@ import {
 import { AuthJwtService } from 'src/infrastructure/auth/auth-jwt.service';
 import { MAIL_SERVICE } from 'src/infrastructure/mail/constants';
 import { GoogleMailService } from 'src/infrastructure/mail/providers/google/google-mail.service';
+import { TemplateResetPasswordContext } from 'src/infrastructure/mail/templates/reset-password.interface';
 import { TemplateVerificationContext } from 'src/infrastructure/mail/templates/verification.interface';
 import { TokenService } from 'src/modules/token/token.service';
-import { AuthRegisterDTO } from '../auth.dto';
+import {
+  AuthRegisterDTO,
+  AuthRequestResetPassword,
+  AuthResetPassword,
+  ResendVerificationDTO,
+} from '../auth.dto';
 import { AuthRepository } from '../auth.repository';
 import { HashService } from './hash.service';
 
@@ -24,61 +30,89 @@ export class AuthService {
     @Inject(MAIL_SERVICE) private readonly mailService: GoogleMailService,
   ) {}
 
-  async register(payload: AuthRegisterDTO) {
-    try {
-      const username = `user${Date.now()}`;
-      const hashedPw = await this.hashService.hash(payload.password!);
-      const userId = await this.repo.createUser({
-        username: username,
-        email: payload.email!,
-        password: hashedPw,
-      });
+  private async sendVerificationEmail(
+    userId: number,
+    email: string,
+    payload: ResendVerificationDTO,
+  ) {
+    const { token, expiresIn } = await this.tokenService.create({
+      userId,
+      type: 'EMAIL_VERIFICATION',
+    });
 
-      const { token, expiresIn } = await this.tokenService.create({
-        userId: userId,
-        type: 'EMAIL_VERIFICATION',
-      });
+    const url = new URL(payload.redirectUrl);
+    url.searchParams.set('token', token);
 
-      const url = new URL(payload.redirectUrl);
-      url.searchParams.set('token', token);
-
-      payload.redirectUrl = url.toString();
-
-      this.mailService.send<TemplateVerificationContext>({
-        to: payload.email,
+    this.mailService
+      .send<TemplateVerificationContext>({
+        to: email,
         subject: 'Verify your account',
         template: 'verification',
         context: {
           appName: payload.appName,
-          verificationUrl: payload.redirectUrl,
+          verificationUrl: url.toString(),
           title: 'Verify your account',
           expiresIn,
         },
+      })
+      .catch((error) => {
+        console.error('Error sending email:', error);
       });
+  }
+
+  async register(payload: AuthRegisterDTO) {
+    try {
+      const username = `user${Date.now()}`;
+      const hashedPw = await this.hashService.hash(payload.password);
+
+      const userId = await this.repo.createUser({
+        username,
+        email: payload.email,
+        password: hashedPw,
+      });
+
+      this.sendVerificationEmail(userId, payload.email, payload);
+
+      return {
+        message: 'Please check your email to verify your account.',
+      };
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
+      const code = (error as any)?.cause?.code;
+
+      if (code === 'ER_DUP_ENTRY') {
+        const [user] = await this.repo.findUserByIdentifier(payload.email);
+
+        if (user && !user.emailVerified) {
+          this.sendVerificationEmail(user.id, payload.email, payload);
+
+          return {
+            message: 'Please check your email to verify your account.',
+          };
+        }
+
+        throw new ConflictException("Someone's already using that email.");
       }
-
-      const {
-        cause: { code },
-      } = error as any;
-
-      if (code === 'ER_DUP_ENTRY')
-        throw new ConflictException('User already exists');
 
       throw new InternalServerErrorException();
     }
+  }
+
+  async resendVerificationEmail(payload: ResendVerificationDTO) {
+    const [user] = await this.repo.findUserByIdentifier(payload.email);
+
+    if (user) {
+      this.sendVerificationEmail(user.id, payload.email, payload);
+    }
+
     return {
-      message:
-        'New user created! Please check your email to verify your account.',
+      message: 'Please check your email to verify your account.',
     };
   }
 
   async login(identifier: string, password: string) {
     try {
       const [user] = await this.repo.findUserByIdentifier(identifier);
-      if (!user) throw new ConflictException('User not found');
+      if (!user) throw new ConflictException('Invalid credentials');
 
       const isPasswordValid = await this.hashService.compare(
         password,
@@ -216,6 +250,71 @@ export class AuthService {
 
       return {
         message: 'Email verified successfully',
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async requestPasswordReset(payload: AuthRequestResetPassword) {
+    try {
+      const [user] = await this.repo.findUserByIdentifier(payload.email);
+
+      if (user) {
+        if (!user.emailVerified)
+          throw new ConflictException('Please verify your email first.');
+
+        const { token, expiresIn } = await this.tokenService.create({
+          userId: user.id,
+          type: 'PASSWORD_RESET',
+        });
+
+        const redirectUrl = new URL(payload.redirectUrl);
+        redirectUrl.searchParams.set('token', token);
+        payload.redirectUrl = redirectUrl.toString();
+
+        this.mailService.send<TemplateResetPasswordContext>({
+          subject: 'Reset your password',
+          to: user.email,
+          template: 'reset-password',
+          context: {
+            appName: payload.appName,
+            resetPasswordUrl: payload.redirectUrl,
+            title: 'Reset your password',
+            expiresIn,
+          },
+        });
+      }
+
+      return {
+        message: 'Password reset email sent successfully',
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async resetPassword(payload: AuthResetPassword) {
+    try {
+      const consumedTokenData = await this.tokenService.consume(
+        payload.token,
+        'PASSWORD_RESET',
+      );
+
+      const hashedPassword = await this.hashService.hash(payload.password);
+
+      await this.repo.updatePassword(consumedTokenData.userId, hashedPassword);
+
+      return {
+        message: 'Password reset successfully',
       };
     } catch (error) {
       if (error instanceof HttpException) {

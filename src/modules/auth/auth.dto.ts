@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PickType } from '@nestjs/swagger';
 import { IsEmail, IsString, IsStrongPassword, IsUrl } from 'class-validator';
 
 export class AuthRegisterDTO {
@@ -52,4 +52,41 @@ export class AuthActivateAccount {
   @ApiProperty()
   @IsString()
   token!: string;
+}
+
+export class AuthRequestResetPassword {
+  @ApiProperty()
+  @IsEmail()
+  email!: string;
+
+  @ApiProperty()
+  @IsUrl({
+    require_tld: true, // make sure it has a top level domain e.g. .com or .co.uk
+    require_protocol: true, // make sure it has a protocol (e.g. http:// or https://)
+  })
+  redirectUrl!: string;
+
+  @ApiProperty()
+  @IsString()
+  appName!: string;
+}
+
+export class AuthResetPassword extends PickType(AuthRegisterDTO, ['password']) {
+  @ApiProperty()
+  @IsString()
+  token!: string;
+}
+
+export class ResendVerificationDTO {
+  @ApiProperty()
+  @IsEmail()
+  email!: string;
+
+  @ApiProperty()
+  @IsUrl()
+  redirectUrl!: string;
+
+  @ApiProperty()
+  @IsString()
+  appName!: string;
 }

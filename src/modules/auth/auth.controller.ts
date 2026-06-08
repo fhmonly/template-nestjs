@@ -5,10 +5,12 @@ import {
   AuthLoginDTO,
   AuthRefreshTokenDTO,
   AuthRegisterDTO,
+  AuthRequestResetPassword,
+  AuthResetPassword,
+  ResendVerificationDTO,
 } from './auth.dto';
 import { AuthService } from './services/auth.service';
 
-@Throttle({ default: { limit: 3, ttl: 60_000 } })
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -19,12 +21,14 @@ export class AuthController {
     return await this.authService.register(dto);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @Post('login')
   @HttpCode(200)
   async login(@Body() dto: AuthLoginDTO) {
     return await this.authService.login(dto.identifier!, dto.password!);
   }
 
+  @Throttle({ default: { limit: 1, ttl: 60_000 } })
   @Post('verify-email')
   @HttpCode(200)
   async activateAccount(@Body() dto: AuthActivateAccount) {
@@ -32,6 +36,7 @@ export class AuthController {
   }
 
   @Post('refresh-token')
+  @Throttle({ default: { limit: 1, ttl: 60_000 } })
   @HttpCode(200)
   async refreshToken(@Body() dto: AuthRefreshTokenDTO) {
     return await this.authService.generateAccessToken(dto.refresh_token!);
@@ -49,5 +54,26 @@ export class AuthController {
   @HttpCode(200)
   async logoutAll(@Body() dto: AuthRefreshTokenDTO) {
     return await this.authService.logoutAll(dto.refresh_token!);
+  }
+
+  @Throttle({ default: { limit: 1, ttl: 60_000 } })
+  @Post('forgot-password')
+  @HttpCode(200)
+  async forgotPassword(@Body() dto: AuthRequestResetPassword) {
+    return await this.authService.requestPasswordReset(dto);
+  }
+
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @Post('reset-password')
+  @HttpCode(200)
+  async resetPassword(@Body() dto: AuthResetPassword) {
+    return await this.authService.resetPassword(dto);
+  }
+
+  @Throttle({ default: { limit: 1, ttl: 60_000 } })
+  @Post('send-verification-email')
+  @HttpCode(200)
+  async sendVerificationEmail(@Body() dto: ResendVerificationDTO) {
+    return await this.authService.resendVerificationEmail(dto);
   }
 }

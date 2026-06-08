@@ -4,6 +4,9 @@ import { AppController } from './app.controller';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { MySQLDatabaseModule } from './infrastructure/database/drivers/mysql/mysql.module';
 import { MySQLDatabaseService } from './infrastructure/database/drivers/mysql/mysql.service';
+import { MailModule } from './infrastructure/mail/mail.module';
+import { GoogleMailModule } from './infrastructure/mail/providers/google/google-mail.module';
+import { GoogleMailService } from './infrastructure/mail/providers/google/google-mail.service';
 import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
@@ -25,6 +28,10 @@ import { AuthModule } from './modules/auth/auth.module';
     //   imports: [RedisCacheModule],
     //   provider: RedisCacheService,
     // }),
+    MailModule.register({
+      imports: [GoogleMailModule],
+      provider: GoogleMailService,
+    }),
     // !============= End Lib Modules ================
 
     // *============= Route Modules ================

@@ -1,4 +1,10 @@
-import { int, mysqlTable, timestamp, varchar } from 'drizzle-orm/mysql-core';
+import {
+  boolean,
+  int,
+  mysqlTable,
+  timestamp,
+  varchar,
+} from 'drizzle-orm/mysql-core';
 
 export const users = mysqlTable('users', {
   id: int('id').primaryKey().autoincrement(),
@@ -9,7 +15,14 @@ export const users = mysqlTable('users', {
 
   password: varchar('password', { length: 255 }).notNull(),
 
-  createdAt: timestamp('created_at').defaultNow(),
+  emailVerified: boolean('email_verified').default(false).notNull(),
+
+  emailVerifiedAt: timestamp('email_verified_at'),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
 });
 
 export type InsertUserSchema = typeof users.$inferInsert;
+export type SelectUserSchema = typeof users.$inferSelect;

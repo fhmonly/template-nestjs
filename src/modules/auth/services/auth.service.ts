@@ -1,37 +1,77 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import bcrypt from 'bcrypt';
+import {
+  ConflictException,
+  HttpException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { AuthJwtService } from 'src/infrastructure/auth/auth-jwt.service';
-import { AuthRegisterDTO } from './auth.dto';
-import { AuthRepository } from './auth.repository';
+import { MAIL_SERVICE } from 'src/infrastructure/mail/constants';
+import { GoogleMailService } from 'src/infrastructure/mail/providers/google/google-mail.service';
+import { TemplateVerificationContext } from 'src/infrastructure/mail/templates/verification.interface';
+import { TokenService } from 'src/modules/token/token.service';
+import { AuthRegisterDTO } from '../auth.dto';
+import { AuthRepository } from '../auth.repository';
+import { HashService } from './hash.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly repo: AuthRepository,
     private readonly authJwtService: AuthJwtService,
+    private readonly hashService: HashService,
+    private readonly tokenService: TokenService,
+    @Inject(MAIL_SERVICE) private readonly mailService: GoogleMailService,
   ) {}
 
   async register(payload: AuthRegisterDTO) {
     try {
       const username = `user${Date.now()}`;
-      const hashedPw = await bcrypt.hash(payload.password!, 10);
-      await this.repo.createUser({
+      const hashedPw = await this.hashService.hash(payload.password!);
+      const userId = await this.repo.createUser({
         username: username,
         email: payload.email!,
         password: hashedPw,
       });
-    } catch (error: any) {
+
+      const { token, expiresIn } = await this.tokenService.create({
+        userId: userId,
+        type: 'EMAIL_VERIFICATION',
+      });
+
+      const url = new URL(payload.redirectUrl);
+      url.searchParams.set('token', token);
+
+      payload.redirectUrl = url.toString();
+
+      this.mailService.send<TemplateVerificationContext>({
+        to: payload.email,
+        subject: 'Verify your account',
+        template: 'verification',
+        context: {
+          appName: payload.appName,
+          verificationUrl: payload.redirectUrl,
+          title: 'Verify your account',
+          expiresIn,
+        },
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       const {
         cause: { code },
-      } = error;
-      throw new ConflictException(
-        code === 'ER_DUP_ENTRY'
-          ? 'User already exists'
-          : 'Something went wrong',
-      );
+      } = error as any;
+
+      if (code === 'ER_DUP_ENTRY')
+        throw new ConflictException('User already exists');
+
+      throw new InternalServerErrorException();
     }
     return {
-      message: 'New user created!',
+      message:
+        'New user created! Please check your email to verify your account.',
     };
   }
 
@@ -40,8 +80,14 @@ export class AuthService {
       const [user] = await this.repo.findUserByIdentifier(identifier);
       if (!user) throw new ConflictException('User not found');
 
-      const isPasswordValid = await bcrypt.compare(password, user.password!);
-      if (!isPasswordValid) throw new ConflictException('Invalid password');
+      const isPasswordValid = await this.hashService.compare(
+        password,
+        user.password!,
+      );
+
+      if (!isPasswordValid) throw new ConflictException('Invalid credentials');
+
+      if (!user.emailVerified) throw new ConflictException('User not verified');
 
       const { id: sub } = user;
       const { access_token, access_token_expires_at } =
@@ -56,7 +102,7 @@ export class AuthService {
 
       const token_id = `${sub}-${refresh_token_jti}`;
 
-      const hashedRefreshToken = await bcrypt.hash(refresh_token, 10);
+      const hashedRefreshToken = await this.hashService.hash(refresh_token);
       await this.repo.createSession({
         userId: user.id,
         refreshTokenHash: hashedRefreshToken,
@@ -71,7 +117,11 @@ export class AuthService {
         refresh_token_expires_at: refresh_token_expires_at.toISOString(),
       };
     } catch (error) {
-      throw new ConflictException('Invalid credentials');
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException();
     }
   }
 
@@ -87,7 +137,7 @@ export class AuthService {
       const [refreshTokenFound] =
         await this.repo.findActiveSessionByJti(token_id);
 
-      const valid = await bcrypt.compare(
+      const valid = await this.hashService.compare(
         refreshToken,
         refreshTokenFound.refreshTokenHash!,
       );
@@ -99,7 +149,11 @@ export class AuthService {
 
       return accessToken;
     } catch (error) {
-      throw new ConflictException('Invalid refresh token');
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException();
     }
   }
 
@@ -117,7 +171,11 @@ export class AuthService {
         message: 'Logout successful',
       };
     } catch (error) {
-      throw new ConflictException('Invalid refresh token');
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException();
     }
   }
 
@@ -139,7 +197,32 @@ export class AuthService {
         message: 'Successfully logged out from all devices',
       };
     } catch (error) {
-      throw new ConflictException('Invalid refresh token');
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async verifyEmail(token: string) {
+    try {
+      const consumedTokenData = await this.tokenService.consume(
+        token,
+        'EMAIL_VERIFICATION',
+      );
+
+      await this.repo.verifyUserEmail(consumedTokenData.userId);
+
+      return {
+        message: 'Email verified successfully',
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException();
     }
   }
 }

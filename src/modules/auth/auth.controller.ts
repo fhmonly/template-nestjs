@@ -1,7 +1,12 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { AuthLoginDTO, AuthRefreshTokenDTO, AuthRegisterDTO } from './auth.dto';
-import { AuthService } from './auth.service';
+import {
+  AuthActivateAccount,
+  AuthLoginDTO,
+  AuthRefreshTokenDTO,
+  AuthRegisterDTO,
+} from './auth.dto';
+import { AuthService } from './services/auth.service';
 
 @Throttle({ default: { limit: 3, ttl: 60_000 } })
 @Controller('auth')
@@ -18,6 +23,12 @@ export class AuthController {
   @HttpCode(200)
   async login(@Body() dto: AuthLoginDTO) {
     return await this.authService.login(dto.identifier!, dto.password!);
+  }
+
+  @Post('verify-email')
+  @HttpCode(200)
+  async activateAccount(@Body() dto: AuthActivateAccount) {
+    return await this.authService.verifyEmail(dto.token!);
   }
 
   @Post('refresh-token')

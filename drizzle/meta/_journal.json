@@ -15,6 +15,13 @@
       "when": 1780474576666,
       "tag": "0001_new_captain_universe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1780905957109,
+      "tag": "0002_busy_zarek",
+      "breakpoints": true
     }
   ]
 }

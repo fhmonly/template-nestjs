@@ -9,7 +9,7 @@ const credentials = validateObjectUsingClass(DatabaseEnvSchema, process.env);
 
 let mysqlConfig: Config = {
   out: './drizzle',
-  schema: './src/database/schemas/**/*.schema.ts',
+  schema: './src/infrastructure/database/schemas/**/*.schema.ts',
   dialect: 'mysql',
   dbCredentials: {
     host: credentials.DB_HOST,

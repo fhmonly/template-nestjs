@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, IsStrongPassword, Length } from 'class-validator';
+import { IsEmail, IsString, IsStrongPassword, IsUrl } from 'class-validator';
 
 export class AuthRegisterDTO {
   @ApiProperty()
@@ -16,6 +16,20 @@ export class AuthRegisterDTO {
     minSymbols: 1,
   })
   password!: string;
+
+  @ApiProperty({
+    description: 'Complete frontend url for verifying user email',
+    example: 'https://myfrontend.com/auth/verify',
+  })
+  @IsUrl({
+    require_tld: true, // make sure it has a top level domain e.g. .com or .co.uk
+    require_protocol: true, // make sure it has a protocol (e.g. http:// or https://)
+  })
+  redirectUrl!: string;
+
+  @ApiProperty()
+  @IsString()
+  appName!: string;
 }
 
 export class AuthLoginDTO {
@@ -31,6 +45,11 @@ export class AuthLoginDTO {
 export class AuthRefreshTokenDTO {
   @ApiProperty()
   @IsString()
-  @Length(1, 255)
   refresh_token!: string;
+}
+
+export class AuthActivateAccount {
+  @ApiProperty()
+  @IsString()
+  token!: string;
 }

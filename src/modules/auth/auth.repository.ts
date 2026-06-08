@@ -83,4 +83,20 @@ export class AuthRepository {
       )
       .limit(1);
   }
+
+  async findUserById(id: number) {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+    return user;
+  }
+
+  async verifyUserEmail(userId: number) {
+    await this.db
+      .update(users)
+      .set({ emailVerifiedAt: new Date(), emailVerified: true })
+      .where(eq(users.id, userId));
+  }
 }
